@@ -1,0 +1,56 @@
+<p>
+	The time is
+	<strong>{hours}:{minutes}:{seconds}</strong>
+	<List/>
+</p>
+
+<script>
+	import List from './list.html';
+
+	export default {
+		components: { List },
+		onstate({ changed, current, previous }) {
+			// this fires before oncreate, and on every state change.
+			// the first time it runs, `previous` is undefined
+			if (changed.time) {
+				console.log(`time changed: ${previous && previous.time} -> ${current.time}`);
+			}
+		},
+
+		oncreate() {
+			// this fires when the component has been
+			// rendered to the DOM
+			console.log('in oncreate');
+
+			this.interval = setInterval(() => {
+				this.set({ time: new Date() });
+			}, 1000);
+		},
+
+		onupdate({ changed, current, previous }) {
+			// this fires after oncreate, and after every state change
+			// once the DOM is synchronised with the data
+			console.log(`The DOM has been updated`);
+		},
+
+		ondestroy() {
+			// this fires when the component is
+			// removed from the DOM
+			console.log('in ondestroy');
+
+			clearInterval(this.interval);
+		},
+
+		data() {
+			return {
+				time: new Date()
+			};
+		},
+
+		computed: {
+			hours:   ({ time }) => time.getHours(),
+			minutes: ({ time }) => time.getMinutes(),
+			seconds: ({ time }) => time.getSeconds()
+		}
+	};
+</script>
