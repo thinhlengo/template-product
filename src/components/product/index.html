@@ -1,56 +1,436 @@
-<p>
-	The time is
-	<strong>{hours}:{minutes}:{seconds}</strong>
-	<List/>
-</p>
+<div class="main ui container">
+	<div class="ui vertically divided grid">
+		<div class="column row">
+			<div class="ui blue right floated button" on:click="callModal()">
+				Add <i class="plus icon"></i>
+			</div>
+		</div>
+		<div class="column row">
+		</div>
+	</div>
 
+	<div class="ui vertically divided grid">
+		<div class="container">
+			
+			<!-- The fileinput-button span is used to style the file input field as button -->
+			<span class="btn btn-success fileinput-button">
+				<i class="glyphicon glyphicon-plus"></i>
+				<span>Add files...</span>
+				<!-- The file input field used as target for the file upload widget -->
+				<input id="fileupload" type="file" name="files[]" multiple>
+			</span>
+			<br>
+			<br>
+			<!-- The global progress bar -->
+			<div id="progress" class="progress">
+				<div class="progress-bar progress-bar-success"></div>
+			</div>
+			<!-- The container for the uploaded files -->
+			<div id="files" class="files"></div>
+		</div>
+	</div>
+<br>
+<br>
+	<!-- <List/> -->
+	<table id="product-list" class="display" width="width: 100%">
+		<thead>
+			<tr>
+				<th>Category</th>
+				<th>Model</th>
+				<th>Color</th>
+				<th>Size</th>
+				<th>Price</th>
+				<th>Description</th>
+				<th>Owner</th>
+				<th>Option</th>
+			</tr>
+		</thead>
+	</table>
+
+	<div class="ui large modal transition hidden" data-backdrop="static" data-keyboard="false">
+		{#if actionModal === 'create'}
+		<div class="header">Create product</div>
+		{:else}
+		<div class="header">Update product</div>
+		{/if}
+		<div class="content">
+			<div class="ui form">
+				<div class="field">
+					<label>Category</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=category >
+					</div>
+				</div>
+				<div class="field">
+					<label>Model</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=model >
+					</div>
+				</div>
+				<div class="field">
+					<label>Color</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=color >
+					</div>
+				</div>
+				<div class="field">
+					<label>Description</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=description >
+					</div>
+				</div>
+				<div class="field">
+					<label>Owner</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=owner >
+					</div>
+				</div>
+				<div class="field">
+					<label>Price</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=price >
+					</div>
+				</div>
+				<div class="field">
+					<label>size</label>
+					<div class="ui input focus">
+						<input type="text" bind:value=size >
+					</div>
+				</div>
+				<div class="field">
+					<label>Main image</label>
+					<div class="ui input focus">
+						<input type="file" id="main-image" >
+					</div>
+				</div>
+				<div class="field">
+					<label>Sub image</label>
+					<div class="ui input focus" >
+						<input type="file" id="sub-image" >
+					</div>
+				</div>
+				<!-- <div class="field">
+					<div class="ui green ok inverted button" on:click="create()">
+						<i class="checkmark icon"></i>
+						Save
+					</div>
+				</div> -->
+			</div>
+		</div>
+		<div class="actions">
+			<div class="ui black deny button">
+				Cancel
+			</div>
+			{#if actionModal === 'create'}
+			<div class="ui green ok inverted button" on:click="create()">
+				<i class="checkmark icon"></i>
+				Save
+			</div>
+			{:else}
+			<div class="ui green ok inverted button" on:click="update()">
+				<i class="checkmark icon"></i>
+				Update
+			</div>
+			{/if}
+		</div>
+	</div>
+</div>
 <script>
-	import List from './list.html';
+// import List from './list.html';
+// import Modal from './modalCreateAndUpdate.html';
 
-	export default {
-		components: { List },
-		onstate({ changed, current, previous }) {
-			// this fires before oncreate, and on every state change.
-			// the first time it runs, `previous` is undefined
-			if (changed.time) {
-				console.log(`time changed: ${previous && previous.time} -> ${current.time}`);
-			}
+export default {
+	// components: { List, Modal },
+	onstate({ changed, current, previous }) {
+	},
+	oncreate() {
+		this.initDatatable();
+		this.initFileUpload();
+	},
+	onupdate({ changed, current, previous }) {
+		console.log(`The DOM has been updated`);
+	},
+	ondestroy() {
+		console.log('in ondestroy');
+		this.set({table: null});
+	},
+	data: function() {
+		return {
+			id: '',
+			category: '',
+			model: '',
+			color: '',
+			description: '',
+			owner: '',
+			price: '',
+			size: '',
+			table: null,
+			actionModal: 'create',
+			files: [],
+		};
+	},
+	computed: {
+	},
+	methods: {
+		initDatatable() {
+			let self = this;
+			let table;
+			$(document).ready(() => {
+				table = $('#product-list').DataTable( {
+					searchDelay: 800,
+					bProcessing: true,
+					pageLength: 10,
+					serverSide: true,
+					ajax: {
+						url: "http://localhost:3001/api/device",
+						type: "POST",
+						complete: function() {
+							$('#product-list tbody .edit-product').on('click', function() {
+								var data = table.row( $(this).parents('tr') ).data();
+								self.editItem(data);
+							});
+
+							$('#product-list tbody .remove-product').on('click', function() {
+								var data = table.row( $(this).parents('tr') ).data();
+								self.removeItem(data);
+							});
+						}
+					},
+					columns: [
+						{ data: "category" },
+						{ data: "model" },
+						{ data: "color" },
+						{ data: "size" },
+						{ data: "price" },
+						{ data: "description" },
+						{ data: "ownerId" },
+						{ title: "Option" }
+					],
+					columnDefs: [{
+						targets: -1,
+						data: null,
+						render: function(data,type,full,meta) {
+							return "<a href='javascript:void(0)' class='edit-product item icon'><i class='edit icon'></i></a>" +
+							"<a href='javascript:void(0)' class='remove-product item icon'><i class='trash icon'></i></a>";
+						}
+					}]
+				});
+				this.set({table: table});
+			});
 		},
+		initFileUpload() {
+			let self = this;
+			let url = window.location.hostname === 'blueimp.github.io' ? '//jquery-file-upload.appspot.com/' : 'server/php/';
+			// let uploadButton = $('<button/>')
+			// 		.addClass('btn btn-primary')
+			// 		.prop('disabled', true)
+			// 		.text('Processing...')
+			// 		.on('click', function () {
+			// 			var $this = $(this),
+			// 				data = $this.data();
+			// 			$this
+			// 				.off('click')
+			// 				.text('Abort')
+			// 				.on('click', function () {
+			// 					$this.remove();
+			// 					data.abort();
+			// 				});
+			// 			data.submit().always(function () {
+			// 				$this.remove();
+			// 			});
+			// 		});
+			let cancelButton = $('<button/>')
+				.addClass('btn btn-warning cancel')
+				// .prop('disabled', true)
+				.text('Processing...')
+				.on('click', function (e) {
+					let $this = $(this),
+						data = $this.data();
+						console.log('data: ', data);
+						data.abort();
+						// $(this).parent().parent().remove();
+				});
+			$('#fileupload').fileupload({
+				dataType: 'json',
+				autoUpload: false,
+				acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
+				maxFileSize: 999000,
+				// Enable image resizing, except for Android and Opera,
+				// which actually support image resizing, but fail to
+				// send Blob objects via XHR requests:
+				disableImageResize: /Android(?!.*Chrome)|Opera/.test(window.navigator.userAgent),
+				previewMaxWidth: 100,
+				previewMaxHeight: 100,
+				previewCrop: true
+			}).on('fileuploadadd', function (e, data) {
 
-		oncreate() {
-			// this fires when the component has been
-			// rendered to the DOM
-			console.log('in oncreate');
+				let files = self.get().files;
+				files = files.concat(data.files)
+				self.set({files: files});
 
-			this.interval = setInterval(() => {
-				this.set({ time: new Date() });
-			}, 1000);
+				data.context = $('<div/>').appendTo('#files');
+				$.each(data.files, function (index, file) {
+					var node = $('<p/>').append($('<span/>').text(file.name));
+					if (!index) {
+						node.append(cancelButton.clone(true).data(data));
+					}
+					node.appendTo(data.context);
+				});
+			}).on('fileuploadprocessalways', function (e, data) {
+				var index = data.index,
+					file = data.files[index],
+					node = $(data.context.children()[index]);
+				if (file.preview) {
+					node
+						.prepend('<br>')
+						.prepend(file.preview);
+				}
+				if (file.error) {
+					node
+						.append('<br>')
+						.append($('<span class="text-danger"/>').text(file.error));
+				}
+				if (index + 1 === data.files.length) {
+					data.context.find('button')
+						.text('Cancel')
+						.prop('disabled', !!data.files.error);
+				}
+			}).on('fileuploadprogressall', function (e, data) {
+				// var progress = parseInt(data.loaded / data.total * 100, 10);
+				// $('#progress .progress-bar').css(
+				// 	'width',
+				// 	progress + '%'
+				// );
+			}).on('fileuploaddone', function (e, data) {
+				// $.each(data.result.files, function (index, file) {
+				// 	if (file.url) {
+				// 		var link = $('<a>')
+				// 			.attr('target', '_blank')
+				// 			.prop('href', file.url);
+				// 		$(data.context.children()[index])
+				// 			.wrap(link);
+				// 	} else if (file.error) {
+				// 		var error = $('<span class="text-danger"/>').text(file.error);
+				// 		$(data.context.children()[index])
+				// 			.append('<br>')
+				// 			.append(error);
+				// 	}
+				// });
+			}).on('fileuploadfail', function (e, data) {
+				// $.each(data.files, function (index) {
+				// 	var error = $('<span class="text-danger"/>').text('File upload failed.');
+				// 	$(data.context.children()[index])
+				// 		.append('<br>')
+				// 		.append(error);
+				// });
+			}).prop('disabled', !$.support.fileInput).parent().addClass($.support.fileInput ? undefined : 'disabled');
 		},
+		resetModal() {
+			this.set({category: ''});
+			this.set({model: ''});
+			this.set({color: ''});
+			this.set({description: ''});
+			this.set({owner: ''});
+			this.set({price: ''});
+			this.set({size: ''});
+			this.set({id: ''});
 
-		onupdate({ changed, current, previous }) {
-			// this fires after oncreate, and after every state change
-			// once the DOM is synchronised with the data
-			console.log(`The DOM has been updated`);
 		},
-
-		ondestroy() {
-			// this fires when the component is
-			// removed from the DOM
-			console.log('in ondestroy');
-
-			clearInterval(this.interval);
+		callModal() {
+			this.resetModal();
+			this.set({actionModal: 'create'});
+			$('.large.modal').modal({backdrop: 'static', keyboard: false, closable  : false}).modal('show');
 		},
+		create() {
+			let data = this.get();
+			let main = $("#main-image").get(0).files[0];
+			let sub = $("#sub-image").get(0).files[0];
 
-		data() {
-			return {
-				time: new Date()
-			};
+			let body = new FormData();
+			body.append('files', main);
+			body.append('files', sub);
+			body.append('ownerId', parseFloat(data.owner));
+			body.append('userId', parseFloat(3));
+			body.append('category', data.category);
+			body.append('model', data.model);
+			body.append('color', data.color);
+			body.append('size', data.size);
+			body.append('price', parseFloat(data.price));
+			body.append('description', data.description);
+			
+			const config = {headers: { 'Content-Type': 'multipart/form-data' }};
+			
+			axios({
+				method: 'post',
+				url: 'http://localhost:3001/api/device/create',
+				data: body,
+				config: { headers: {'Content-Type': 'multipart/form-data' }}
+			})
+			.then(function (response) {
+				console.log(response);
+			})
+			.catch(function (error) {
+				console.log(error);
+			});
+			$('.modal').modal('show');
 		},
+		editItem(product) {
+			this.resetModal();
+			this.set({category: product.category});
+			this.set({model: product.model});
+			this.set({color: product.color});
+			this.set({description: product.description});
+			this.set({owner: product.ownerId});
+			this.set({price: product.price});
+			this.set({size: product.size});
+			this.set({id: product.id});			
+			this.set({actionModal: 'update'});
+			$('.large.modal').modal({backdrop: 'static', keyboard: false, closable  : false}).modal('show');
 
-		computed: {
-			hours:   ({ time }) => time.getHours(),
-			minutes: ({ time }) => time.getMinutes(),
-			seconds: ({ time }) => time.getSeconds()
+		},
+		removeItem(product) {
+			if (!Object.keys(product).length)
+				return;
+
+			axios.delete(`http://localhost:3001/api/device/${product.id}/delete`)
+			.then((response) => {
+				if (response.status === 200) {
+					toastr.success('Device was Removed', 'Done!')
+					this.get().table.ajax.reload();
+				}
+			})
+			.catch((error) => {
+				console.log(error);
+			});
+		},
+		update() {
+			let data = this.get();
+			console.log('data--: ', data);
+			let body = new FormData();
+			body.append('ownerId', parseFloat(data.owner));
+			body.append('category', data.category);
+			body.append('model', data.model);
+			body.append('color', data.color);
+			body.append('size', data.size);
+			body.append('price', parseFloat(data.price));
+			body.append('description', data.description);
+			
+			const config = {headers: { 'Content-Type': 'multipart/form-data' }};
+			
+			axios({
+				method: 'put',
+				url: `http://localhost:3001/api/device/${data.id}/update-info`,
+				data: body,
+				config: { headers: {'Content-Type': 'multipart/form-data' }}
+			})
+			.then(function (response) {
+				console.log(response);
+			})
+			.catch(function (error) {
+				console.log(error);
+			});
+			$('.modal').modal('show');
 		}
-	};
+	}
+};
 </script>

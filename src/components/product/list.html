@@ -1,26 +1,17 @@
-<div class="main ui container">
-    <div class="ui vertically divided grid">
-        <div class="column row">
-            <div class="ui blue right floated button" tabindex="0">
-                Add <i class="plus icon"></i>
-            </div>
-            <div class="ui input">
-                <input id="myInput" type="text" placeholder="Search...">
-            </div>
-        </div>
-        <div class="column row">
-        </div>
-    </div>
-    <table id="product-list" class="display" width="width: 100%"></table>
-</div>
-<style>
-    #example_wrapper {
-        width: 100% !important;
-    }
-    .dataTables_wrapper {
-        width: 100% !important;
-    }
-</style>
+<table id="product-list" class="display" width="width: 100%">
+    <thead>
+        <tr>
+            <th>Category</th>
+            <th>Model</th>
+            <th>Color</th>
+            <th>Size</th>
+            <th>Price</th>
+            <th>Description</th>
+            <th>Owner</th>
+            <th>Option</th>
+        </tr>
+    </thead>
+</table>
 <script>
     export default {
 		onstate({ changed, current, previous }) {
@@ -28,115 +19,63 @@
             if (current && current.length)
                 dataSet = current;
 		},
-
 		oncreate() {
             let self = this;
             let data = this.get();
+            let table;
+            console.log('data: ', data);
             $(document).ready(() => {
-                let table = $('#product-list').DataTable( {
-                    data: data.dataSet,
-                    bPaginate:true,
-                    sPaginationType: "full_numbers",
-                    iDisplayLength: 5,
-                    pageLength: 20,
-                    // serverSide: true,
-                    // ajax: {
-                    //     url: "scripts/post.php",
-                    //     type: "GET",
-                    //     dataFilter: function(data){
-                    //         console.log('data----: ', data);
-                    //         var json = jQuery.parseJSON( data );
-                    //         json.recordsTotal = json.total;
-                    //         json.recordsFiltered = json.total;
-                    //         json.data = json.list;
-                
-                    //         return JSON.stringify( json ); // return JSON string
-                    //     }
-                    // },
+                table = $('#product-list').DataTable( {
+                    searchDelay: 800,
+                    bProcessing: true,
+                    pageLength: 10,
+                    serverSide: true,
+                    ajax: {
+                        url: "http://localhost:3001/api/device",
+                        type: "POST",
+                        complete: function() {
+                            $('#product-list tbody .edit-product').on('click', function() {
+                                var data = table.row( $(this).parents('tr') ).data();
+                                self.editItem(data);
+                            });
+
+                            $('#product-list tbody .remove-product').on('click', function() {
+                                var data = table.row( $(this).parents('tr') ).data();
+                                self.removeItem(data);
+                            });
+                        }
+                    },
                     columns: [
-                        { title: "Name" },
-                        { title: "Position" },
-                        { title: "Office" },
-                        { title: "Extn." },
-                        { title: "Start date" },
-                        { title: "Salary" },
-                        { titel: "Option" }
+                        { data: "category" },
+                        { data: "model" },
+                        { data: "color" },
+                        { data: "size" },
+                        { data: "price" },
+                        { data: "description" },
+                        { data: "ownerId" },
+                        { title: "Option" }
                     ],
                     columnDefs: [{
                         targets: -1,
                         data: null,
-                        defaultContent: "<a href='javascript:void(0)' class='edit-product item icon'><i class='edit icon'></i></a>  <a href='javascript:void(0)' class='remove-product item icon'><i class='trash icon'></i></a>"
+                        render: function(data,type,full,meta) {
+                            return "<a href='javascript:void(0)' class='edit-product item icon'><i class='edit icon'></i></a>" +
+                            "<a href='javascript:void(0)' class='remove-product item icon'><i class='trash icon'></i></a>";
+                        }
                     }]
                 });
-                $('#product-list tbody .edit-product').on('click', function() {
-                    var data = table.row( $(this).parents('tr') ).data();
-                    console.log('data-123123: ', data[6]);
-                    let id = data[6];
-                    self.editItem(id);
-                });
-
-                $('#product-list tbody .remove-product').on('click', function() {
-                    var data = table.row( $(this).parents('tr') ).data();
-                    console.log('data-123123: ', data[6]);
-                    let id = data[6];
-                    self.removeItem(id);
-                });
-
-                $('#myInput').on( 'keyup', function () {
-                    table.search( this.value ).draw();
-                    console.log('this.value: ', table.search( this.value ).draw());
-                });
+                this.set({table: table});
             });
+		},
+		onupdate({ changed, current, previous }) {
             
 		},
-
-		onupdate({ changed, current, previous }) {
-            // console.log('changed: ', changed, current, previous);
-		},
-
 		ondestroy() {
+            this.set({table: null});
 		},
-
 		data() {
 			return {
-				dataSet: [
-                    [ "Tiger Nixon", "System Architect", "Edinburgh", "5421", "2011/04/25", "$320,800", 12 ],
-                    [ "Garrett Winters", "Accountant", "Tokyo", "8422", "2011/07/25", "$170,750", 13 ],
-                    [ "Ashton Cox", "Junior Technical Author", "San Francisco", "1562", "2009/01/12", "$86,000", 14 ],
-                    [ "Cedric Kelly", "Senior Javascript Developer", "Edinburgh", "6224", "2012/03/29", "$433,060", 15 ],
-                    [ "Airi Satou", "Accountant", "Tokyo", "5407", "2008/11/28", "$162,700", 16 ],
-                    [ "Brielle Williamson", "Integration Specialist", "New York", "4804", "2012/12/02", "$372,000", 17 ],
-                    [ "Herrod Chandler", "Sales Assistant", "San Francisco", "9608", "2012/08/06", "$137,500", 18 ],
-                    [ "Rhona Davidson", "Integration Specialist", "Tokyo", "6200", "2010/10/14", "$327,900", 1 ],
-                    [ "Colleen Hurst", "Javascript Developer", "San Francisco", "2360", "2009/09/15", "$205,500", 2 ],
-                    [ "Sonya Frost", "Software Engineer", "Edinburgh", "1667", "2008/12/13", "$103,600", 3 ],
-                    [ "Jena Gaines", "Office Manager", "London", "3814", "2008/12/19", "$90,560", 4 ],
-                    [ "Quinn Flynn", "Support Lead", "Edinburgh", "9497", "2013/03/03", "$342,000", 5 ],
-                    [ "Charde Marshall", "Regional Director", "San Francisco", "6741", "2008/10/16", "$470,600", 6 ],
-                    [ "Haley Kennedy", "Senior Marketing Designer", "London", "3597", "2012/12/18", "$313,500", 7 ],
-                    [ "Tatyana Fitzpatrick", "Regional Director", "London", "1965", "2010/03/17", "$385,750", 8 ],
-                    [ "Michael Silva", "Marketing Designer", "London", "1581", "2012/11/27", "$198,500", 9 ],
-                    [ "Paul Byrd", "Chief Financial Officer (CFO)", "New York", "3059", "2010/06/09", "$725,000", 10 ],
-                    [ "Gloria Little", "Systems Administrator", "New York", "1721", "2009/04/10", "$237,500", 11 ],
-                    [ "Bradley Greer", "Software Engineer", "London", "2558", "2012/10/13", "$132,000", 19 ],
-                    [ "Dai Rios", "Personnel Lead", "Edinburgh", "2290", "2012/09/26", "$217,500", 20 ],
-                    [ "Jenette Caldwell", "Development Lead", "New York", "1937", "2011/09/03", "$345,000", 21 ],
-                    [ "Yuri Berry", "Chief Marketing Officer (CMO)", "New York", "6154", "2009/06/25", "$675,000", 22 ],
-                    [ "Caesar Vance", "Pre-Sales Support", "New York", "8330", "2011/12/12", "$106,450", 23 ],
-                    [ "Doris Wilder", "Sales Assistant", "Sidney", "3023", "2010/09/20", "$85,600", 24 ],
-                    [ "Angelica Ramos", "Chief Executive Officer (CEO)", "London", "5797", "2009/10/09", "$1,200,000", 25 ],
-                    [ "Gavin Joyce", "Developer", "Edinburgh", "8822", "2010/12/22", "$92,575", 26 ],
-                    [ "Jennifer Chang", "Regional Director", "Singapore", "9239", "2010/11/14", "$357,650", 27 ],
-                    [ "Brenden Wagner", "Software Engineer", "San Francisco", "1314", "2011/06/07", "$206,850", 28 ],
-                    [ "Fiona Green", "Chief Operating Officer (COO)", "San Francisco", "2947", "2010/03/11", "$850,000", 29 ],
-                    [ "Shou Itou", "Regional Marketing", "Tokyo", "8899", "2011/08/14", "$163,000", 30 ],
-                    [ "Michelle House", "Integration Specialist", "Sidney", "2769", "2011/06/02", "$95,400", 31 ],
-                    [ "Suki Burks", "Developer", "London", "6832", "2009/10/22", "$114,500", 32 ],
-                    [ "Prescott Bartlett", "Technical Author", "London", "3606", "2011/05/07", "$145,000", 33 ],
-                    [ "Gavin Cortez", "Team Leader", "San Francisco", "2860", "2008/10/26", "$235,500", 34 ],
-                    [ "Martena Mccray", "Post-Sales support", "Edinburgh", "8240", "2011/03/09", "$324,050", 35 ],
-                    [ "Unity Butler", "Marketing Designer", "San Francisco", "5384", "2009/12/09", "$85,675", 36 ]
-                ]
+				table: null
 			};
 		},
 		computed: {
@@ -145,8 +84,20 @@
             editItem(idProduct) {
                 console.log('edit nhe: ', idProduct);
             },
-            removeItem(idProduct) {
-                console.log('remove nhe: ', idProduct);
+            removeItem(product) {
+                if (!Object.keys(product).length)
+                    return;
+
+                axios.delete(`http://localhost:3001/api/device/${product.id}/delete`)
+                .then((response) => {
+                    if (response.status === 200) {
+                        toastr.success('Device was Removed', 'Done!')
+                        this.get().table.ajax.reload();
+                    }
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
             }
         }
 	};

@@ -1,0 +1,84 @@
+<div class="ui large modal transition hidden" data-backdrop="static" data-keyboard="false">
+    <!-- <i class="close icon"></i> -->
+    <div class="header">Action with product</div>
+    <div class="content">
+        <div class="ui form">
+            <div class="field">
+                <label>Category</label>
+                <div class="ui input focus">
+                    <input type="text" placeholder="">
+                </div>
+            </div>
+            <div class="field">
+                <label>Model</label>
+                <div class="ui input focus">
+                    <input type="text" placeholder="">
+                </div>
+            </div>
+            <div class="field">
+                <label>Color</label>
+                <div class="ui input focus">
+                    <input type="text" placeholder="">
+                </div>
+            </div>
+            <div class="field">
+                <label>Description</label>
+                <div class="ui input focus">
+                    <input type="text" placeholder="">
+                </div>
+            </div>
+            <div class="field">
+                <label>Owner</label>
+                <div class="ui input focus">
+                    <input type="text" placeholder="">
+                </div>
+            </div>
+            <div class="field">
+                <label>Main image</label>
+                <div class="ui input focus">
+                    <input type="file" placeholder="">
+                </div>
+            </div>
+            <div class="field">
+                <label>Sub image</label>
+                <div class="ui input focus">
+                    <input type="file" placeholder="">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancel
+        </div>
+        <div class="ui green ok inverted button">
+            <i class="checkmark icon"></i>
+            Save
+        </div>
+    </div>
+</div>
+
+<script>
+export default {
+    onstate({ changed, current, previous }) {
+    },
+    oncreate() {
+    },
+    onupdate({ changed, current, previous }) {
+    },
+    ondestroy() {
+    },
+    data() {
+        return {
+            time: new Date()
+        };
+    },
+    computed: {
+    },
+    methods: {
+        callModal() {
+            $('.large.modal').modal({backdrop: 'static', keyboard: false, closable  : false}).modal('show');
+        }
+    }
+};
+</script>

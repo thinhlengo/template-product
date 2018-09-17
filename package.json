@@ -17,5 +17,10 @@
     "dev": "run-p start:dev autobuild",
     "start": "sirv public",
     "start:dev": "sirv public --dev"
+  },
+  "dependencies": {
+    "Buffer": "0.0.0",
+    "axios": "^0.18.0",
+    "concat-stream": "^1.6.2"
   }
 }
